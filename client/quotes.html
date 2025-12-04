@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Quotes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">Q</div>
+        <div>
+          <div style="font-weight:700">Quotes</div>
+          <div style="font-size:13px;color:var(--muted)">Smjernice i inspiracija</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="createBtn" class="btn ghost">Dodaj citat</button>
+        <button id="logoutBtn" class="btn">Logout</button>
+      </div>
+    </div>
+
+    <div id="content">
+      <div style="margin-bottom:12px; display:flex;justify-content:space-between;align-items:center">
+        <div style="color:var(--muted)">Pregled dostupnih citata</div>
+        <div id="tags" style="display:flex;gap:8px"></div>
+      </div>
+
+      <div id="grid" class="grid">
+        <!-- cards will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+    

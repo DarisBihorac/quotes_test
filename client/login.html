@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Login — Quotes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container login-wrap">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <h2>Prijava</h2>
+          <div style="color:var(--muted);font-size:13px">Unesi username i password</div>
+        </div>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-row">
+          <input class="input" id="username" placeholder="Korisničko ime" required />
+        </div>
+        <div class="form-row">
+          <input type="password" class="input" id="password" placeholder="Lozinka" required />
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+          <button type="submit" class="btn">Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    if(localStorage.getItem("token")){
+      window.location.href = "quotes.html";
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("http://localhost:8080/login", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ username, password })
+        });
+
+        if(!res.ok){
+          alert("Greska pri konekciji ili pogresni podaci");
+          return;
+        }
+
+        const data = await res.json();
+        if(data.accessToken){
+          localStorage.setItem("token", data.accessToken);
+          window.location.href = "quotes.html";
+        } else {
+          alert("Pogresni kredencijali.");
+        }
+      } catch(err){
+        console.error(err);
+        alert("Network error.");
+      }
+    });
+  </script>
+</body>
+</html>
