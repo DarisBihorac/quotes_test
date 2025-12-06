@@ -1,102 +1,79 @@
-const API_BASE = "http://localhost:8080";
+const API_BASE = "http://localhost:3000";
 const token = localStorage.getItem("token");
 
-if(!token){
-  window.location.href = "login.html";
+if (!token) {
+  window.location.href = "./login.html";
 }
 
-document.getElementById("logoutBtn").addEventListener("click", ()=>{
-  localStorage.removeItem("token");
-  window.location.href = "login.html";
-});
+const quotesList = document.getElementById("quotes-list");
+const logoutBtn = document.getElementById("logout-btn");
+const addForm = document.getElementById("add-form");
 
-document.getElementById("createBtn").addEventListener("click", ()=> alert("Dodaj modal ili formu za dodavanje citata"));
+// ------------------ GET QUOTES ------------------
+async function loadQuotes() {
+  const res = await fetch(`${API_BASE}/quotes/all`, {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
 
-async function loadQuotes(){
-  try {
-    const res = await fetch(API_BASE + "/quotes", {
-      headers: { "Authorization": "Bearer " + token }
-    });
-    if(!res.ok) throw new Error("Neuspesan zahtev");
+  const data = await res.json();
 
-    const data = await res.json();
-    renderQuotes(data || []);
-  } catch(err){
-    console.error(err);
-    alert("Ne mogu da učitam citate. Proveri server.");
-  }
-}
+  quotesList.innerHTML = "";
 
-function renderQuotes(quotes){
-  const grid = document.getElementById("grid");
-  grid.innerHTML = "";
+  data.forEach(q => {
+    const item = document.createElement("div");
+    item.classList.add("quote-card");
 
-  if(!quotes.length){
-    grid.innerHTML = '<div class="card" style="padding:24px">Nema citata.</div>';
-    return;
-  }
+    item.innerHTML = `
+      <p class="quote-text">"${q.text}"</p>
+      <p class="quote-author">— ${q.author}</p>
 
-  quotes.forEach(q=>{
-    const el = document.createElement("div");
-    el.className = "quote-card";
-
-    el.innerHTML = `
-      <div class="quote-text">"${escapeHtml(q.text || q.quote || q.content || '')}"</div>
-      <div class="quote-meta">
-        <div>
-          <div style="font-weight:600">${escapeHtml(q.author || "Nepoznat")}</div>
-          <div style="color:var(--muted);font-size:13px">${escapeHtml(q.tag || '')}</div>
-        </div>
-        <div class="controls">
-          <div class="badge">${q.score ?? 0}</div>
-          <button class="icon-btn" data-id="${q.id}" data-action="up">👍</button>
-          <button class="icon-btn" data-id="${q.id}" data-action="down">👎</button>
-          <button class="icon-btn" data-id="${q.id}" data-action="del" title="Delete">🗑️</button>
-        </div>
+      <div class="vote-box">
+        <button onclick="vote('${q.id}', 'upvote')">👍 ${q.upvotes}</button>
+        <button onclick="vote('${q.id}', 'downvote')">👎 ${q.downvotes}</button>
       </div>
     `;
 
-    grid.appendChild(el);
-  });
-
-  grid.querySelectorAll(".icon-btn").forEach(btn=>{
-    btn.addEventListener("click", async (e)=>{
-      const id = e.currentTarget.dataset.id;
-      const action = e.currentTarget.dataset.action;
-      if(action === "del"){
-        if(!confirm("Obrisati citat?")) return;
-        await apiDelete(id);
-      } else if(action === "up"){
-        await apiVote(id, "upvote");
-      } else {
-        await apiVote(id, "downvote");
-      }
-      await loadQuotes();
-    });
+    quotesList.appendChild(item);
   });
 }
 
-async function apiVote(id, type){
-  try {
-    await fetch(`${API_BASE}/quotes/${id}/${type}`, {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + token }
-    });
-  } catch(err){ console.error(err) }
-}
+window.vote = async function(id, type) {
+  await fetch(`${API_BASE}/quotes/${type}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ id })
+  });
 
-async function apiDelete(id){
-  try {
-    await fetch(`${API_BASE}/quotes/${id}`, {
-      method: "DELETE",
-      headers: { "Authorization": "Bearer " + token }
-    });
-  } catch(err){ console.error(err) }
-}
+  loadQuotes();
+};
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+// ------------------ ADD QUOTE ------------------
+addForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const author = document.getElementById("author").value.trim();
+  const text = document.getElementById("text").value.trim();
+
+  await fetch(`${API_BASE}/quotes/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ author, text })
+  });
+
+  addForm.reset();
+  loadQuotes();
+});
+
+// ------------------ LOGOUT ------------------
+logoutBtn.addEventListener("click", () => {
+  localStorage.removeItem("token");
+  window.location.href = "./login.html";
+});
 
 loadQuotes();
-
